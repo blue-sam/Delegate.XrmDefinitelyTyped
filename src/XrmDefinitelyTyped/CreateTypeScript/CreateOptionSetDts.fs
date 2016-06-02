@@ -5,15 +5,15 @@ open IntermediateRepresentation
 
 module internal CreateOptionSetDts =
  
-  let getOptionSetEnum (tsv:int*int) (os:OptionSet) =
-    Enum.Create(
-      os.displayName,
-      os.options 
+  let getOptionSetEnum (tsv:int*int,os:OptionSet, moduleName) =
+    [Enum.Create(
+        os.displayName,
+        os.options 
         |> Array.Parallel.map (fun o -> o.label, Some o.value) 
         |> List.ofArray,
-      declare = true,
-      constant = (tsv >= (1,4)) )
-    |> enumToString
+        constant = (tsv >= (1,4)) )]
+    |>fun enums-> Module.Create(moduleName,declare = true, enums=enums)
+    |> moduleToString
 
 
   let getUniquePicklists (es:XrmEntity[]) =

@@ -243,10 +243,10 @@ module GeneratorLogic =
 
 
   /// Generate a few base files
-  let generateBaseFiles state =
+  let generateBaseFiles (state, moduleName) =
     // Blank entity interfaces
     state.entities
-    |> getBlankEntityInterfaces
+    |> fun list -> getBlankEntityInterfaces(list, moduleName)
     |> fun lines -> 
       File.WriteAllLines(
         sprintf "%s/_internal/entities.d.ts" state.outputDir, 
@@ -262,14 +262,15 @@ module GeneratorLogic =
 
 
   /// Generate the Enum files
-  let generateEnumFiles state =
+  let generateEnumFiles (state, moduleName) =
     printf "Writing Enum files..."
     state.entities
     |> getUniquePicklists
-    |> Array.Parallel.iter (fun os ->
-      File.WriteAllLines(
-        sprintf "%s/_internal/Enum/%s.d.ts" state.outputDir os.displayName,
-        getOptionSetEnum state.tsv os))
+    |> Array.Parallel.map (fun os ->
+        getOptionSetEnum(state.tsv, os, moduleName), os.displayName)
+    |> Array.Parallel.iter(fun (lines, displayName) ->
+          File.WriteAllLines(
+            sprintf "%s/_internal/Enum/%s.d.ts" state.outputDir displayName, lines))
     printfn "Done!"
 
 
@@ -289,10 +290,10 @@ module GeneratorLogic =
 
 
   /// Generate the Entity files
-  let generateEntityFiles state =
+  let generateEntityFiles (state, moduleName:string) =
     printf "Writing Entity files..."
     state.entities
-    |> Array.Parallel.map (fun e -> e.logicalName, getEntityContext e)
+    |> Array.Parallel.map (fun e -> e.logicalName, getEntityInterfaces(e, moduleName))
     |> Array.Parallel.iter (fun (name, lines) ->
       File.WriteAllLines(sprintf "%s/Entity/%s.d.ts" state.outputDir name, 
         entityRef 1 :: baseRef 1 :: entityEnumRef 1 name :: lines))

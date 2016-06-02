@@ -19,4 +19,5 @@ type XrmDefinitelyTypedSettings = {
   entities: string[] option
   solutions: string[] option
   sdkVersion: XrmVersion option
+  moduleName: string
 }

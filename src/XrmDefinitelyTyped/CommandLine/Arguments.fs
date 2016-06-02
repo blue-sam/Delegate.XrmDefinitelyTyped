@@ -10,6 +10,10 @@ type Args private () =
       description="Url to the Organization.svc"
       required=true }
 
+    { command="module"
+      description="TypeScript module in which to place everything"
+      required=true }
+
     { command="username"
       description="CRM Username"
       required=true }

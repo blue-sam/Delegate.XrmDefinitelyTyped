@@ -41,6 +41,7 @@ let executeGetContext argv =
    
   let entities = getListArg parsedArgs "entities" (fun s -> s.ToLower())
   let solutions = getListArg parsedArgs "solutions" id
+  let moduleName = parsedArgs.Item "module"
 
   let settings =
     { XrmDefinitelyTypedSettings.out = parsedArgs.TryFind "out"
@@ -48,6 +49,7 @@ let executeGetContext argv =
       entities = entities
       solutions = solutions
       sdkVersion = None
+      moduleName = moduleName
     }
 
   XrmDefinitelyTyped.GetContext(xrmAuth, settings)

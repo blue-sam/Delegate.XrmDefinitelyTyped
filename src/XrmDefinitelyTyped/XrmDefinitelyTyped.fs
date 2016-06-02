@@ -6,7 +6,7 @@ open GeneratorLogic
 
 type XrmDefinitelyTyped private () =
 
-  static member GetContext(url, username, password, ?domain, ?ap, ?out, ?tsv, ?entities, ?solutions) =
+  static member GetContext(url, username, password, ?domain, ?ap, ?out, ?tsv, ?entities, ?solutions, ?moduleName:string) =
     let xrmAuth =
       { XrmAuthentication.url = Uri(url);
         username = username;
@@ -21,6 +21,7 @@ type XrmDefinitelyTyped private () =
         entities = entities
         solutions = solutions
         sdkVersion = None
+        moduleName = defaultArg moduleName null
       }
     XrmDefinitelyTyped.GetContext(xrmAuth, settings)
 
@@ -55,10 +56,10 @@ type XrmDefinitelyTyped private () =
       // Generate the files
       data
       |>> generateResourceFiles
-      |>> generateBaseFiles
-      |>> generateEnumFiles
+      |>> fun d -> generateBaseFiles(d, settings.moduleName)
+      |>> fun d -> generateEnumFiles(d, settings.moduleName)
       |>> generateEntityEnumFiles
-      |>> generateEntityFiles
+      |>> fun d -> generateEntityFiles(d, settings.moduleName)
       |>> generateIPageFiles
       |>  generateFormFiles
 

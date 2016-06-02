@@ -68,7 +68,7 @@ module internal CreateEntityDts =
   (** Code creation methods *)
 
   /// Create entity interfaces
-  let getEntityInterfaces e = 
+  let getEntityInterfaces (e, moduleName) = 
     let baseName = baseName e.schemaName
     let selName = selectName e.schemaName
     let expName = expName e.schemaName
@@ -80,48 +80,50 @@ module internal CreateEntityDts =
         e.schemaName, Type.Generic ("QueryMapping", 
           (sprintf "%s,%s,%s,%s,%s" e.schemaName selName expName filterName resultName)))
 
-    [ Interface.Create(baseName, 
+    [ Interface.Create(baseName, export = Export,
         vars = (e.attr_vars |> getOrgVariables),
         superClass = "Entity")
-      Interface.Create(e.schemaName, 
+      Interface.Create(e.schemaName, export = Export,
         vars = (e.rel_vars |> getRelationshipVariables false),
         superClass = baseName)
-      Interface.Create(resultName, 
+      Interface.Create(resultName, export = Export,
         vars = (e.rel_vars |> getRelationshipVariables true),
         superClass = baseName)
 
       // XrmQuery interfaces
-      Interface.Create(selName, 
+      Interface.Create(selName, export = Export,
         vars = (e.attr_vars |> getSelectVariables selName),
         superClass = expName)
-      Interface.Create(filterName, 
+      Interface.Create(filterName, export = Export,
         vars = (e.attr_vars |> getFilterVariables))
-      Interface.Create(expName, 
+      Interface.Create(expName, export = Export,
         vars = (e.rel_vars |> getExpandVariables e.schemaName))
 
-      Interface.Create("Entities", vars = [mapping])
+      Interface.Create("Entities",export = Export, vars = [mapping])
     ]
+    |> fun list -> Module.Create(moduleName,declare = true, interfaces = list)
+    |> moduleToString
 
-  let getEntityContext (e:XrmEntity): string list =
-    (getEntityInterfaces e |> List.map interfaceToString |> List.concat)
+//  let getEntityContext (e, moduleName) =
+//    getEntityInterfaces(e, moduleName) 
   
 
   /// Create blank interfaces for entities.d.ts
-  let getBlankEntityInterfaces es = 
+  let getBlankEntityInterfaces (es: XrmEntity[], moduleName) = 
     let queryMapping = 
       Interface.Create("QueryMapping<O, S, E, F, R>")
 
     es
-    |> Array.map (fun e ->
-      let baseName = sprintf "%sBase" e.schemaName
-      [ Interface.Create(baseName, superClass = "Entity")
-        Interface.Create(sprintf "%sResult" e.schemaName, superClass = baseName)
-        Interface.Create(sprintf "%s_Select" e.schemaName)
-        Interface.Create(e.schemaName, superClass = baseName) ])
-    |> List.concat
-    |> fun list -> queryMapping :: Interface.Create("Entity") :: list 
-    |> List.map interfaceToString
-    |> List.concat
+        |> Array.map (fun e ->
+          let baseName = sprintf "%sBase" e.schemaName
+          [ Interface.Create(baseName,export = Export, superClass = "Entity")
+            Interface.Create(sprintf "%sResult" e.schemaName,export = Export, superClass = baseName)
+            Interface.Create(sprintf "%s_Select" e.schemaName, export = Export)
+            Interface.Create(e.schemaName, export = Export, superClass = baseName) ])
+        |> List.concat
+        |> fun list -> queryMapping :: Interface.Create("Entity",export = Export) :: list 
+        |> fun list -> Module.Create(moduleName, declare = true, interfaces = list)
+        |> moduleToString
 
 
   /// Create entity enums
@@ -132,8 +134,7 @@ module internal CreateEntityDts =
         Enum.Create(os.displayName, 
           os.options 
             |> Array.map (fun o -> o.label, Some o.value) |> List.ofArray,
-          export = true,
-          constant = true))
+          export = true))
       |> List.fold (fun acc os -> 
         if List.exists (fun (x:Enum) -> os.name = x.name) acc then acc 
         else os::acc) []
