@@ -3,8 +3,10 @@
 open System
 open Utility
 open GeneratorLogic
+open System.Collections.Generic
 
 type XrmDefinitelyTyped private () =
+
 
   static member GetContext(url, username, password, ?domain, ?ap, ?out, ?tsv, ?entities, ?solutions, ?moduleName:string) =
     let xrmAuth =
@@ -25,7 +27,6 @@ type XrmDefinitelyTyped private () =
       }
     XrmDefinitelyTyped.GetContext(xrmAuth, settings)
 
-
   static member GetContext(xrmAuth, settings) =
     #if !DEBUG
     try
@@ -33,9 +34,6 @@ type XrmDefinitelyTyped private () =
       let out = settings.out |? "."
       let tsv = settings.tsv |? (Int32.MaxValue, Int32.MaxValue)
 
-      // Pre-generation tasks
-      clearOldOutputFiles out
-      generateFolderStructure out
 
       let mainProxy = connectToCrm xrmAuth
       let proxyGetter = proxyHelper xrmAuth
@@ -51,17 +49,28 @@ type XrmDefinitelyTyped private () =
       let data = 
         (mainProxy, proxyGetter)
         ||> retrieveCrmData sdkVersion entities
-        |> interpretCrmData out tsv
+        |> interpretCrmData out tsv settings.moduleName
+
+      // Pre-generation tasks
+      clearOldOutputFiles out
+      generateFolderStructure out
+
+      //let realData =
+      let fileList = new List<string>()
 
       // Generate the files
       data
       |>> generateResourceFiles
-      |>> fun d -> generateBaseFiles(d, settings.moduleName)
-      |>> fun d -> generateEnumFiles(d, settings.moduleName)
-      |>> generateEntityEnumFiles
-      |>> fun d -> generateEntityFiles(d, settings.moduleName)
-      |>> generateIPageFiles
-      |>  generateFormFiles
+      |>> generateBaseFiles
+      |>> generateEnumFiles fileList
+      //|>> generateEntityEnumFiles
+      |>> generateEntityFiles fileList
+      |>> generateIPageFiles fileList
+      |>  generateFormFiles fileList
+      
+      
+      fileList
+      |> generateReferenceFiles data
 
       printfn "\nSuccessfully generated all TypeScript declaration files."
 

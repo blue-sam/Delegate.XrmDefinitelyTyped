@@ -27,8 +27,8 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <WarningLevel>3</WarningLevel>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>0</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\XrmDefinitelyTyped.XML</DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
@@ -45,6 +45,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Release\XrmDefinitelyTyped.xml</DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
+    <StartArguments>/module:Sawfish.Entities /url:https://sawfishdev.crm.dynamics.com/XRMServices/2011/Organization.svc /solutions:Sawfish /out:gen /username:sam@prenticeworx.com /password:PW0rx2016</StartArguments>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -70,18 +71,6 @@
   </Target>
   -->
   <ItemGroup>
-    <Content Include="bin\tools\CrmSvcUtil.exe">
-      <Paket>True</Paket>
-    </Content>
-    <Content Include="bin\tools\CrmSvcUtil.xml">
-      <Paket>True</Paket>
-    </Content>
-    <Content Include="bin\tools\Microsoft.Xrm.Sdk.dll">
-      <Paket>True</Paket>
-    </Content>
-    <Content Include="bin\tools\SolutionPackager.exe">
-      <Paket>True</Paket>
-    </Content>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Domain.fs" />
     <Compile Include="Utility.fs" />
@@ -96,6 +85,7 @@
     <Content Include="Resources\dg.xrmquery.min.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\index.d.ts" />
     <Compile Include="TypeScript/TypeScript.fs" />
     <Compile Include="TypeScript/TsStringUtil.fs" />
     <Compile Include="Crm/CrmAuth.fs" />

@@ -3,6 +3,7 @@
 open System
 open System.IO
 open System.Reflection
+open System.Collections.Generic
 
 open Microsoft.Xrm.Sdk
 open Microsoft.Xrm.Sdk.Metadata
@@ -20,6 +21,9 @@ open CreateEntityRestDts
 open CreateOptionSetDts
 open CreateIPageDts
 open CreateFormDts
+
+open TsStringUtil
+
 
 module GeneratorLogic =
 
@@ -43,19 +47,13 @@ module GeneratorLogic =
     entities: XrmEntity[]
     forms: XrmForm[]
     bpfControls: Map<string,ControlField list>
+    moduleName:string
   }
 
 
   (** Reference helpers *)
 
-  let makeRef = sprintf "/// <reference path=\"%s.d.ts\" />"
-  let makeRefSub n = sprintf "/// <reference path=\"%s%s.d.ts\" />" (String.replicate n "../")
-  let baseRef n = makeRefSub n "base"
-  let entityRef n = makeRefSub n "_internal/entities"
-  let entityEnumRef n name = makeRefSub n (sprintf "_internal/EntityEnum/%s" name)
-  let enumRef n name = makeRefSub n (sprintf "_internal/Enum/%s" name)
-  let enumsToRefs enums = enums |> List.map (fun enum -> sprintf "../Enum/%s" enum |> makeRef)
-
+  let makeRefPlain = sprintf "/// <reference path=\"%s\" />"
 
   (** Resource helpers *)
 
@@ -100,10 +98,10 @@ module GeneratorLogic =
     printf "Generating folder structure..."
     Directory.CreateDirectory (sprintf "%s/IPage" out) |> ignore
     Directory.CreateDirectory (sprintf "%s/Entity" out) |> ignore
+    Directory.CreateDirectory (sprintf "%s/Enums" out) |> ignore
     Directory.CreateDirectory (sprintf "%s/Form" out) |> ignore
-    Directory.CreateDirectory (sprintf "%s/_internal" out) |> ignore
-    Directory.CreateDirectory (sprintf "%s/_internal/Enum" out) |> ignore
-    Directory.CreateDirectory (sprintf "%s/_internal/EntityEnum" out) |> ignore
+//    Directory.CreateDirectory (sprintf "%s/_internal" out) |> ignore
+//    Directory.CreateDirectory (sprintf "%s/_internal/EntityEnum" out) |> ignore
     printfn "Done!"
 
   // Proxy helper that makes it easy to get a new proxy instance
@@ -203,7 +201,7 @@ module GeneratorLogic =
       |> Some
 
   /// Interprets the raw CRM data into an intermediate state used for further generation
-  let interpretCrmData out tsv (rawState:RawState) =
+  let interpretCrmData out tsv moduleName (rawState:RawState) =
     printf "Interpreting data..."
     let nameMap = 
       rawState.metadata
@@ -211,7 +209,7 @@ module GeneratorLogic =
       |> Map.ofArray
 
     let entityMetadata =
-      rawState.metadata |> Array.Parallel.map (interpretEntity nameMap)
+      rawState.metadata |> Array.Parallel.map (interpretEntity nameMap moduleName)
 
     let bpfControls = interpretBpfs rawState.bpfData
 
@@ -222,7 +220,8 @@ module GeneratorLogic =
       bpfControls = bpfControls
       forms = forms
       outputDir = out
-      tsv = tsv }
+      tsv = tsv
+      moduleName = moduleName }
 
 
   /// Generate the files stored as resources
@@ -230,99 +229,99 @@ module GeneratorLogic =
     getDeclarationFile "base.d.ts" state.tsv
     |> fun lines -> 
       File.WriteAllLines(
-        sprintf "%s/base.d.ts" state.outputDir, makeRef "_internal/entities" :: lines)
+        sprintf "%s/base.d.ts" state.outputDir, lines)
 
-    getDeclarationFile "metadata.d.ts" state.tsv
-    |> fun lines -> 
-      File.WriteAllLines(
-        sprintf "%s/metadata.d.ts" state.outputDir, lines)
-      
-    getDeclarationFile "dg.xrmquery.d.ts" state.tsv
-    |> fun lines -> 
-      File.WriteAllLines(sprintf "%s/dg.xrmquery.d.ts" state.outputDir, lines)
+//    getDeclarationFile "metadata.d.ts" state.tsv
+//    |> fun lines -> 
+//      File.WriteAllLines(
+//        sprintf "%s/metadata.d.ts" state.outputDir, lines)
+//      
+//    getDeclarationFile "dg.xrmquery.d.ts" state.tsv
+//    |> fun lines -> 
+//      File.WriteAllLines(sprintf "%s/dg.xrmquery.d.ts" state.outputDir, lines)
 
 
   /// Generate a few base files
-  let generateBaseFiles (state, moduleName) =
+  let generateBaseFiles (state) =
     // Blank entity interfaces
     state.entities
-    |> fun list -> getBlankEntityInterfaces(list, moduleName)
+    |> fun list -> getBlankEntityInterfaces(list, state.moduleName)
     |> fun lines -> 
       File.WriteAllLines(
-        sprintf "%s/_internal/entities.d.ts" state.outputDir, 
+        sprintf "%s/entities.d.ts" state.outputDir, 
         lines)
 
     // REST file
-    state.entities
-    |> getFullRestModule
-    |> fun lines ->  
-      File.WriteAllLines(
-        sprintf "%s/rest.d.ts" state.outputDir, 
-        makeRef "_internal/entities" :: lines)
+//    state.entities
+//    |> getFullRestModule
+//    |> fun lines ->  
+//      File.WriteAllLines(
+//        sprintf "%s/rest.d.ts" state.outputDir, 
+//        lines)
 
 
   /// Generate the Enum files
-  let generateEnumFiles (state, moduleName) =
+  let generateEnumFiles  (refFilePaths:List<string>) (state) =
     printf "Writing Enum files..."
     state.entities
     |> getUniquePicklists
     |> Array.Parallel.map (fun os ->
-        getOptionSetEnum(state.tsv, os, moduleName), os.displayName)
+        getOptionSetEnum(state.tsv, os, state.moduleName), os.displayName)
     |> Array.Parallel.iter(fun (lines, displayName) ->
+          let filePath =sprintf  "Enums/%s.d.ts" displayName
+          refFilePaths.Add(filePath)
           File.WriteAllLines(
-            sprintf "%s/_internal/Enum/%s.d.ts" state.outputDir displayName, lines))
+            sprintf "%s/%s" state.outputDir filePath, lines))
     printfn "Done!"
 
+  let generateReferenceFiles state (files)=
+    files
+    |> Seq.map makeRefPlain
+    |> fun lines -> 
+        File.WriteAllLines(sprintf "%s/index.d.ts" state.outputDir, lines)
 
-  /// Generate the EntityEnum files
-  let generateEntityEnumFiles state =
-    printf "Writing EntityEnum files..."
-    state.entities
-    |> Array.Parallel.map (fun em -> 
-      em.logicalName, 
-      em.opt_sets |> List.map (fun os -> os.displayName))
-
-    |> Array.Parallel.iter (fun (name, enums) ->
-      File.WriteAllLines(
-        sprintf "%s/_internal/EntityEnum/%s.d.ts" state.outputDir name, 
-        enumsToRefs enums))
-    printfn "Done!"
 
 
   /// Generate the Entity files
-  let generateEntityFiles (state, moduleName:string) =
+  let generateEntityFiles  (refFilePaths:List<string>) (state) =
     printf "Writing Entity files..."
     state.entities
-    |> Array.Parallel.map (fun e -> e.logicalName, getEntityInterfaces(e, moduleName))
+    |> Array.Parallel.map (fun e -> e.logicalName, getEntityInterfaces(e, state.moduleName))
     |> Array.Parallel.iter (fun (name, lines) ->
-      File.WriteAllLines(sprintf "%s/Entity/%s.d.ts" state.outputDir name, 
-        entityRef 1 :: baseRef 1 :: entityEnumRef 1 name :: lines))
+      let filePath = sprintf "Entity/%s.d.ts" name
+      refFilePaths.Add(filePath)
+      File.WriteAllLines(sprintf "%s/%s" state.outputDir filePath, 
+        lines))
     printfn "Done!"
 
 
   /// Generate the IPage files
-  let generateIPageFiles state =
+  let generateIPageFiles (refFilePaths:List<string>) state =
     printf "Writing IPage files..."
     state.entities
     |> Array.Parallel.map (fun e -> e.logicalName, getIPageContext e)
     |> Array.Parallel.iter 
       (fun (name, lines) -> 
-        File.WriteAllLines(sprintf "%s/IPage/%s.d.ts" state.outputDir name, 
-          baseRef 1 :: entityEnumRef 1 name :: lines))
+        let filePath = sprintf "IPage/%s.d.ts" name
+        refFilePaths.Add(filePath)
+        File.WriteAllLines(sprintf "%s/%s" state.outputDir filePath, 
+          lines))
     printfn "Done!"
 
 
   /// Generate the Form files
-  let generateFormFiles state =
+  let generateFormFiles (refFilePaths:List<string>) (state) =
     printf "Writing Form files..."
     state.forms
-    |> Array.Parallel.iter (fun xrmForm ->
-      let path = sprintf "%s/Form/%s/%s" state.outputDir xrmForm.entityName xrmForm.formType
-      Directory.CreateDirectory path |> ignore
+    |> Array.Parallel.map (fun xrmForm-> xrmForm, (sprintf "Form/%s/%s" xrmForm.entityName xrmForm.formType))
+    |> Array.Parallel.iter(fun (xrmForm, path) ->
+      Directory.CreateDirectory (sprintf "%s/%s" state.outputDir path) |> ignore
+      let filePath = sprintf "%s/%s.d.ts" path xrmForm.name
+      refFilePaths.Add(filePath)
 
       // TODO: check for forms with same name
       let lines = xrmForm |> getFormDts
-      File.WriteAllLines(sprintf "%s/%s.d.ts" path xrmForm.name, 
-        baseRef 3 :: entityEnumRef 3 xrmForm.entityName :: lines)
+      File.WriteAllLines(sprintf "%s/%s" state.outputDir  filePath, 
+        lines)
     )
     printfn "Done!"

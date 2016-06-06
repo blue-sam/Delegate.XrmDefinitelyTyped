@@ -91,15 +91,15 @@ module internal CreateEntityDts =
         superClass = baseName)
 
       // XrmQuery interfaces
-      Interface.Create(selName, export = Export,
-        vars = (e.attr_vars |> getSelectVariables selName),
-        superClass = expName)
-      Interface.Create(filterName, export = Export,
-        vars = (e.attr_vars |> getFilterVariables))
-      Interface.Create(expName, export = Export,
-        vars = (e.rel_vars |> getExpandVariables e.schemaName))
+//      Interface.Create(selName, export = Export,
+//        vars = (e.attr_vars |> getSelectVariables selName),
+//        superClass = expName)
+//      Interface.Create(filterName, export = Export,
+//        vars = (e.attr_vars |> getFilterVariables))
+//      Interface.Create(expName, export = Export,
+//        vars = (e.rel_vars |> getExpandVariables e.schemaName))
 
-      Interface.Create("Entities",export = Export, vars = [mapping])
+//      Interface.Create("Entities",export = Export, vars = [mapping])
     ]
     |> fun list -> Module.Create(moduleName,declare = true, interfaces = list)
     |> moduleToString
@@ -118,10 +118,11 @@ module internal CreateEntityDts =
           let baseName = sprintf "%sBase" e.schemaName
           [ Interface.Create(baseName,export = Export, superClass = "Entity")
             Interface.Create(sprintf "%sResult" e.schemaName,export = Export, superClass = baseName)
-            Interface.Create(sprintf "%s_Select" e.schemaName, export = Export)
+            //Interface.Create(sprintf "%s_Select" e.schemaName, export = Export)
             Interface.Create(e.schemaName, export = Export, superClass = baseName) ])
         |> List.concat
-        |> fun list -> queryMapping :: Interface.Create("Entity",export = Export) :: list 
+        |> fun list -> Interface.Create("Entity",export = Export) :: list 
+        //|> fun list -> queryMapping :: Interface.Create("Entity",export = Export) :: list 
         |> fun list -> Module.Create(moduleName, declare = true, interfaces = list)
         |> moduleToString
 

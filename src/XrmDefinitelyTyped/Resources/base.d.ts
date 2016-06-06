@@ -1484,11 +1484,11 @@ interface Xrm<T extends IPage.PageBase<IPage.AttributeCollectionBase, IPage.TabC
     /**
      * Various utility functions can be found here.
      */
-    Utility: Xrm.Utility;
+    Utility: XrmRef.Utility;
 }
 
 
-declare module Xrm {
+declare module XrmRef{
     var Page: IPage.PageBase<IPage.AttributeCollectionBase, IPage.TabCollectionBase, IPage.ControlCollectionBase>;
     var Utility: Utility;
 
