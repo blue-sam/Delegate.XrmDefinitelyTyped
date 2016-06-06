@@ -3,7 +3,7 @@
 open System
 open System.IO
 open System.Reflection
-open System.Collections.Generic
+open System.Collections.Concurrent
 
 open Microsoft.Xrm.Sdk
 open Microsoft.Xrm.Sdk.Metadata
@@ -96,7 +96,7 @@ module GeneratorLogic =
   /// Generate the required output folder structure
   let generateFolderStructure out =
     printf "Generating folder structure..."
-    Directory.CreateDirectory (sprintf "%s/IPage" out) |> ignore
+//    Directory.CreateDirectory (sprintf "%s/IPage" out) |> ignore
     Directory.CreateDirectory (sprintf "%s/Entity" out) |> ignore
     Directory.CreateDirectory (sprintf "%s/Enums" out) |> ignore
     Directory.CreateDirectory (sprintf "%s/Form" out) |> ignore
@@ -261,15 +261,15 @@ module GeneratorLogic =
 
 
   /// Generate the Enum files
-  let generateEnumFiles  (refFilePaths:List<string>) (state) =
+  let generateEnumFiles  (refFilePaths:ConcurrentQueue<string>) (state) =
     printf "Writing Enum files..."
     state.entities
     |> getUniquePicklists
     |> Array.Parallel.map (fun os ->
         getOptionSetEnum(state.tsv, os, state.moduleName), os.displayName)
-    |> Array.Parallel.iter(fun (lines, displayName) ->
+    |> Array.iter(fun (lines, displayName) ->
           let filePath =sprintf  "Enums/%s.d.ts" displayName
-          refFilePaths.Add(filePath)
+          refFilePaths.Enqueue(filePath)
           File.WriteAllLines(
             sprintf "%s/%s" state.outputDir filePath, lines))
     printfn "Done!"
@@ -283,41 +283,41 @@ module GeneratorLogic =
 
 
   /// Generate the Entity files
-  let generateEntityFiles  (refFilePaths:List<string>) (state) =
+  let generateEntityFiles  (refFilePaths:ConcurrentQueue<string>) (state) =
     printf "Writing Entity files..."
     state.entities
     |> Array.Parallel.map (fun e -> e.logicalName, getEntityInterfaces(e, state.moduleName))
     |> Array.Parallel.iter (fun (name, lines) ->
       let filePath = sprintf "Entity/%s.d.ts" name
-      refFilePaths.Add(filePath)
+      refFilePaths.Enqueue(filePath)
       File.WriteAllLines(sprintf "%s/%s" state.outputDir filePath, 
         lines))
     printfn "Done!"
 
 
   /// Generate the IPage files
-  let generateIPageFiles (refFilePaths:List<string>) state =
+  let generateIPageFiles (refFilePaths:ConcurrentQueue<string>) state =
     printf "Writing IPage files..."
     state.entities
     |> Array.Parallel.map (fun e -> e.logicalName, getIPageContext e)
     |> Array.Parallel.iter 
       (fun (name, lines) -> 
         let filePath = sprintf "IPage/%s.d.ts" name
-        refFilePaths.Add(filePath)
+        refFilePaths.Enqueue(filePath)
         File.WriteAllLines(sprintf "%s/%s" state.outputDir filePath, 
           lines))
     printfn "Done!"
 
 
   /// Generate the Form files
-  let generateFormFiles (refFilePaths:List<string>) (state) =
+  let generateFormFiles (refFilePaths:ConcurrentQueue<string>) (state) =
     printf "Writing Form files..."
     state.forms
     |> Array.Parallel.map (fun xrmForm-> xrmForm, (sprintf "Form/%s/%s" xrmForm.entityName xrmForm.formType))
     |> Array.Parallel.iter(fun (xrmForm, path) ->
       Directory.CreateDirectory (sprintf "%s/%s" state.outputDir path) |> ignore
       let filePath = sprintf "%s/%s.d.ts" path xrmForm.name
-      refFilePaths.Add(filePath)
+      refFilePaths.Enqueue(filePath)
 
       // TODO: check for forms with same name
       let lines = xrmForm |> getFormDts

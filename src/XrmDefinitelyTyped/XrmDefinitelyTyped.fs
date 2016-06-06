@@ -3,7 +3,7 @@
 open System
 open Utility
 open GeneratorLogic
-open System.Collections.Generic
+open System.Collections.Concurrent
 
 type XrmDefinitelyTyped private () =
 
@@ -56,7 +56,7 @@ type XrmDefinitelyTyped private () =
       generateFolderStructure out
 
       //let realData =
-      let fileList = new List<string>()
+      let fileList = new ConcurrentQueue<string>()
 
       // Generate the files
       data
@@ -65,7 +65,7 @@ type XrmDefinitelyTyped private () =
       |>> generateEnumFiles fileList
       //|>> generateEntityEnumFiles
       |>> generateEntityFiles fileList
-      |>> generateIPageFiles fileList
+      //|>> generateIPageFiles fileList
       |>  generateFormFiles fileList
       
       

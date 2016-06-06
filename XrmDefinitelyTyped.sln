@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{63297B98-5CED-492C-A5B7-A5B4F73CF142}"
 	ProjectSection(SolutionItems) = preProject
@@ -45,6 +45,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "resources", "resources", "{D42B01E3-EDD6-4699-AD6B-BADAFD80369C}"
 	ProjectSection(SolutionItems) = preProject
 		docs\files\res\style.css = docs\files\res\style.css
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EE46BC34-D44C-487A-B8C6-E326C5FBEDA5}"
+	ProjectSection(SolutionItems) = preProject
+		build.cmd = build.cmd
 	EndProjectSection
 EndProject
 Global
