@@ -2,7 +2,8 @@
 
 module internal TsStringUtil =
 
-  let getConstantType (name:string) = name.Replace("\\", "\\\\").Replace("\"", "\\\"") |> sprintf "\"%s\"" |> Type.Custom
+  let getNameConst (name:string) = name.Replace("\\", "\\\\").Replace("\"", "\\\"") |> sprintf "\"%s\""
+  let getConstantType (name:string) = getNameConst name |> Type.Custom
 
   let rec typeToString = function
     | Type.Void           -> "void"
@@ -76,7 +77,7 @@ module internal TsStringUtil =
     | []    -> ""
     | list  -> sprintf "implements %s " (String.concat ", " list)
 
-  let exportTypeToString = function
+  let exportTypeToString= function
     | Export  -> "export "
     | Regular -> ""
 
@@ -131,6 +132,13 @@ module internal TsStringUtil =
       @ List.concat (List.map (funcToString false) c.funcs)
       )
     @ ["}"]
+
+  let typeDefToString (t:TypeDef) =
+    if(t.options.Length > 0)
+    then
+        [ sprintf "type %s = %s;" t.name (String.concat "| " t.options) ]
+    else
+        []
     
   let interfaceToString (i:Interface) =  
     [(sprintf "%sinterface %s %s%s{"
@@ -145,24 +153,30 @@ module internal TsStringUtil =
       )
     @ ["}"]
 
-  let rec moduleToString (m:Module) =
+  let rec moduleToStringInternal (m:Module, declare) =
     let funcs = 
       match m.ambient with
       | true  -> List.map (funcToIString true) m.funcs |> endLines
       | false -> List.map (funcToString true) m.funcs |> List.concat
 
     [(sprintf "%s%smodule %s {"
-        (declareToString m.declare)
-        (exportTypeToString m.export)
+        (declareToString declare)
+        (if(declare)then "" else (exportTypeToString m.export))
         m.name 
     )]
     @ indent 
       ( (List.map varToString m.vars |> preLines "var " |> endLines)
       @ (List.map enumToString m.enums |> List.concat)
       @ funcs
-      @ (List.map moduleToString m.modules |> List.concat)
+      @ (List.map (fun m -> moduleToStringInternal(m,false)) m.modules |> List.concat)
       @ (List.map interfaceToString m.interfaces |> List.concat)
       @ (List.map classToString m.classes |> List.concat)
+      @ (List.map typeDefToString m.types |> List.concat)
       )
     @ ["}"]
+
+  let rec moduleToString (m:Module) =
+    m
+    |> fun m -> moduleToStringInternal(m, true)
+
 

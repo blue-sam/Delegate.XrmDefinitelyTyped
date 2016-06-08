@@ -12,7 +12,14 @@ module internal CreateOptionSetDts =
         |> Array.Parallel.map (fun o -> o.label, Some o.value) 
         |> List.ofArray,
         constant = (tsv >= (1,4)) )]
-    |>fun enums-> Module.Create(moduleName,declare = true, enums=enums)
+    |>fun enums-> 
+        let m= Module.Create("Enums",
+        export = ExportType.Export,
+        declare = true, enums=enums)
+        if(System.String.IsNullOrWhiteSpace(moduleName))
+        then m
+        else
+            Module.Create(moduleName, modules=[m])
     |> moduleToString
 
 

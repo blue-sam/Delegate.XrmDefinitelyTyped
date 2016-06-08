@@ -9,7 +9,7 @@ open Utility
 module internal CreateEntityRestDts =
 
   /// Structure for rest.d.ts
-  let getFullRestModule es = 
+  let getFullRestModule moduleName es = 
     let succesCbEmpty = 
       Variable.Create("successCallBack", Type.Function([], Type.Any))
 
@@ -120,5 +120,9 @@ module internal CreateEntityRestDts =
             Type.Void)
       ])
     |> fun rest ->
-      Module.Create("SDK", declare = true, modules = [rest])
+      let m=Module.Create("SDK", declare = true, modules = [rest])
+      if(System.String.IsNullOrWhiteSpace(moduleName))
+      then m
+      else
+          Module.Create(moduleName, modules=[m])
     |> moduleToString

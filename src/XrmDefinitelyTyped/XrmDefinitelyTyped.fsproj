@@ -75,8 +75,8 @@
     <Compile Include="Domain.fs" />
     <Compile Include="Utility.fs" />
     <EmbeddedResource Include="Resources/base.d.ts" />
-    <EmbeddedResource Include="Resources/metadata.d.ts" />
-    <None Include="Resources\dg.xrmquery.ts" />
+    <None Include="Resources\metadata.d.ts.bak" />
+    <None Include="Resources\dg.xrmquery.ts.bak" />
     <Content Include="Resources\tsconfig.json" />
     <EmbeddedResource Include="Resources\dg.xrmquery.d.ts" />
     <Content Include="Resources\dg.xrmquery.js">

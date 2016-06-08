@@ -67,6 +67,13 @@ type Function =
       returnType = returnType
       expr = defaultArg expr [] }
 
+type TypeDef = 
+  { name : string
+    options : string list}
+  static member Create(name, options) = 
+    { TypeDef.name = name
+      options = options}
+
 type Class = 
   { name : string
     export : ExportType
@@ -113,9 +120,10 @@ type Module =
     funcs : Function list
     modules : Module list
     interfaces : Interface list
-    classes : Class list }
+    classes : Class list 
+    types: TypeDef list}
   static member Create(name, ?export, ?declare, ?ambient, ?vars, ?enums, 
-                       ?modules, ?funcs, ?interfaces, ?classes) = 
+                       ?modules, ?funcs, ?interfaces, ?classes, ?types) = 
     { Module.name = name
       export = defaultArg export Regular
       declare = defaultArg declare false
@@ -125,4 +133,6 @@ type Module =
       funcs = defaultArg funcs []
       modules = defaultArg modules []
       interfaces = defaultArg interfaces []
-      classes = defaultArg classes [] }
+      classes = defaultArg classes []
+      types = defaultArg types []
+       }

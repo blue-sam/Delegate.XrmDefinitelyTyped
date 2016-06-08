@@ -101,7 +101,12 @@ module internal CreateEntityDts =
 
 //      Interface.Create("Entities",export = Export, vars = [mapping])
     ]
-    |> fun list -> Module.Create(moduleName,declare = true, interfaces = list)
+    |> fun list -> 
+        let m=Module.Create("Entities",declare = true, interfaces = list)
+        if(System.String.IsNullOrWhiteSpace(moduleName))
+        then m
+        else
+            Module.Create(moduleName, modules=[m])
     |> moduleToString
 
 //  let getEntityContext (e, moduleName) =
@@ -123,12 +128,17 @@ module internal CreateEntityDts =
         |> List.concat
         |> fun list -> Interface.Create("Entity",export = Export) :: list 
         //|> fun list -> queryMapping :: Interface.Create("Entity",export = Export) :: list 
-        |> fun list -> Module.Create(moduleName, declare = true, interfaces = list)
+        |> fun list -> 
+            let m = Module.Create("Entities", declare = true, interfaces = list)
+            if(System.String.IsNullOrWhiteSpace(moduleName))
+            then m
+            else
+                Module.Create(moduleName, modules=[m])
         |> moduleToString
 
 
   /// Create entity enums
-  let getEntityEnums (e:XrmEntity): string list =
+  let getEntityEnums moduleName (e:XrmEntity): string list =
     let enums =
       e.opt_sets
       |> List.map (fun os ->
@@ -140,8 +150,13 @@ module internal CreateEntityDts =
         if List.exists (fun (x:Enum) -> os.name = x.name) acc then acc 
         else os::acc) []
 
-    Module.Create(
-      sprintf "Enum.%s" e.schemaName,
-      declare = true,
-      enums = enums) 
+    let m= Module.Create(
+    sprintf "Enums.%s" e.schemaName,
+    export = ExportType.Export,
+    enums = enums) 
+    if(System.String.IsNullOrWhiteSpace(moduleName))
+    then m
+    else
+        Module.Create(moduleName, modules=[m])
     |> moduleToString
+

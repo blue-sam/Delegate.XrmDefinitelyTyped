@@ -66,8 +66,13 @@ module internal CreateIPageDts =
                   Type.Boolean)) ],
               Type.Custom "BaseControl") ])
 
-  let getIPageContext (e:XrmEntity): string list =
-    (Module.Create("IPage", declare = true,
+  let getIPageContext moduleName (e:XrmEntity): string list =
+    let m= Module.Create("Forms", declare = true,
       interfaces = [getIPageInterface e]) 
-    |> moduleToString)
+      
+    if(System.String.IsNullOrWhiteSpace(moduleName))
+    then m
+    else
+        Module.Create(moduleName, modules=[m])
+    |> moduleToString
 

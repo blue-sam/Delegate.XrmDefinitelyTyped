@@ -66,12 +66,17 @@ module GeneratorLogic =
       while not sr.EndOfStream do yield sr.ReadLine ()
     } |> List.ofSeq
 
-  let getDeclarationFile resName tsv =
+  let getDeclarationFile resName tsv moduleName =
     getResourceLines resName
     |> fun lines ->
-      match tsv >= (1,4) with
-      | true -> lines
-      | false -> lines |> List.map (fun s -> s.Replace("const enum", "enum"))
+          match tsv >= (1,4) with
+          | true -> lines
+          | false -> lines |> List.map (fun s -> s.Replace("const enum", "enum"))
+    |> List.map(fun s -> 
+        if(System.String.IsNullOrWhiteSpace(moduleName))
+        then s
+        else s.Replace("/*ModuleName*/", moduleName + "."))
+            
 
 
 
@@ -97,9 +102,9 @@ module GeneratorLogic =
   let generateFolderStructure out =
     printf "Generating folder structure..."
 //    Directory.CreateDirectory (sprintf "%s/IPage" out) |> ignore
-    Directory.CreateDirectory (sprintf "%s/Entity" out) |> ignore
+    Directory.CreateDirectory (sprintf "%s/Entities" out) |> ignore
     Directory.CreateDirectory (sprintf "%s/Enums" out) |> ignore
-    Directory.CreateDirectory (sprintf "%s/Form" out) |> ignore
+    Directory.CreateDirectory (sprintf "%s/Forms" out) |> ignore
 //    Directory.CreateDirectory (sprintf "%s/_internal" out) |> ignore
 //    Directory.CreateDirectory (sprintf "%s/_internal/EntityEnum" out) |> ignore
     printfn "Done!"
@@ -209,7 +214,7 @@ module GeneratorLogic =
       |> Map.ofArray
 
     let entityMetadata =
-      rawState.metadata |> Array.Parallel.map (interpretEntity nameMap moduleName)
+      rawState.metadata |> Array.Parallel.map (interpretEntity nameMap)
 
     let bpfControls = interpretBpfs rawState.bpfData
 
@@ -226,10 +231,8 @@ module GeneratorLogic =
 
   /// Generate the files stored as resources
   let generateResourceFiles state =
-    getDeclarationFile "base.d.ts" state.tsv
-    |> fun lines -> 
-      File.WriteAllLines(
-        sprintf "%s/base.d.ts" state.outputDir, lines)
+    getDeclarationFile "base.d.ts" state.tsv state.moduleName
+    |> fun lines -> File.WriteAllLines(sprintf "%s/base.d.ts" state.outputDir, lines)
 
 //    getDeclarationFile "metadata.d.ts" state.tsv
 //    |> fun lines -> 
@@ -288,7 +291,7 @@ module GeneratorLogic =
     state.entities
     |> Array.Parallel.map (fun e -> e.logicalName, getEntityInterfaces(e, state.moduleName))
     |> Array.Parallel.iter (fun (name, lines) ->
-      let filePath = sprintf "Entity/%s.d.ts" name
+      let filePath = sprintf "Entities/%s.d.ts" name
       refFilePaths.Enqueue(filePath)
       File.WriteAllLines(sprintf "%s/%s" state.outputDir filePath, 
         lines))
@@ -299,10 +302,10 @@ module GeneratorLogic =
   let generateIPageFiles (refFilePaths:ConcurrentQueue<string>) state =
     printf "Writing IPage files..."
     state.entities
-    |> Array.Parallel.map (fun e -> e.logicalName, getIPageContext e)
+    |> Array.Parallel.map (fun e -> e.logicalName, getIPageContext state.moduleName e)
     |> Array.Parallel.iter 
       (fun (name, lines) -> 
-        let filePath = sprintf "IPage/%s.d.ts" name
+        let filePath = sprintf "Forms/%s.d.ts" name
         refFilePaths.Enqueue(filePath)
         File.WriteAllLines(sprintf "%s/%s" state.outputDir filePath, 
           lines))
@@ -320,7 +323,7 @@ module GeneratorLogic =
       refFilePaths.Enqueue(filePath)
 
       // TODO: check for forms with same name
-      let lines = xrmForm |> getFormDts
+      let lines = xrmForm |> getFormDts state.moduleName
       File.WriteAllLines(sprintf "%s/%s" state.outputDir  filePath, 
         lines)
     )

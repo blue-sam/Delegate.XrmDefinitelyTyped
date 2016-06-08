@@ -1,4 +1,4 @@
-﻿declare module IPage {
+﻿declare module /*ModuleName*/Forms {
     /**
      * Enum which corresponds to the values of Xrm.Page.ui.getFormType()
      */
@@ -419,7 +419,7 @@
         clearNotification(uniqueId: string): boolean;
     }
 
-    interface Control<T extends IPage.EmptyAttribute> extends BaseControl {
+    interface Control<T extends EmptyAttribute> extends BaseControl {
         /**
          * Get the attribute this control is bound to.
          */
@@ -556,14 +556,14 @@
          * Refreshes the data displayed in a subgrid.
          */
         refresh();
-    
+
         /**
          * Only for CRM Online 2015 Update 1 or later
          * Add event handlers to this event to run every time the subgrid refreshes. 
          * This includes when users sort the values by clicking the column headings. 
          */
         addOnLoad(functionRef: (context?: ExecutionContext) => any);
-    
+
         /**
          * Only for CRM Online 2015 Update 1 or later
          * Use this method to get the logical name of the entity data displayed in the grid.
@@ -589,7 +589,7 @@
         removeOnLoad(reference: Function);
     }
 
-    
+
     interface Grid {
         /**
          * Returns a collection of every GridRow in the Grid.
@@ -632,7 +632,7 @@
         /**
          * Returns an entity reference for the record in the row.
          */
-        getEntityReference(): IPage.EntityReference;
+        getEntityReference(): EntityReference;
 
         /**
          * Returns the id for the record in the row.
@@ -653,7 +653,7 @@
         /**
          * Use this method to get a reference to the current view.
          */
-        getCurrentView(): IPage.EntityReference;
+        getCurrentView(): EntityReference;
 
         /**
          * Use this method to determine whether the view selector is visible.
@@ -663,7 +663,7 @@
         /**
          * Use this method to set the current view.
          */
-        setCurrentView(reference: IPage.EntityReference);
+        setCurrentView(reference: EntityReference);
     }
 
     /**
@@ -827,7 +827,7 @@
         save(saveOptions?: SaveOptions): Then;
     }
 
-  
+
     /**
      * Interface for the business process flow on a form.
      */
@@ -1198,7 +1198,7 @@
         navigation: Navigation;
         /**
          * Method to get the form context for the record. 
-         * Matches the values found in the IPage.FormType enum.
+         * Matches the values found in the FormType enum.
          */
         getFormType(): FormType;
         /**
@@ -1455,15 +1455,15 @@
         /**
          * Data on the page.
          */
-        data: IPage.DataModule<T>;
+        data: DataModule<T>;
         /**
          * UI of the page.
          */
-        ui: IPage.UiModule<U, V>;
+        ui: UiModule<U, V>;
         /**
          * The context of the page.
          */
-        context: IPage.context;
+        context: context;
     }
 
     /**
@@ -1471,25 +1471,25 @@
      */
     interface BasicPage extends PageBase<AttributeCollection, TabCollection, ControlCollection> {
     }
+    /**
+     * Client-side xRM object model.
+     */
+    interface Xrm<T extends Forms.PageBase<Forms.AttributeCollectionBase, Forms.TabCollectionBase, Forms.ControlCollectionBase>> {
+        /**
+         * The Xrm.Page object model, which contains data about the current page.
+         */
+        Page: T;
+        /**
+         * Various utility functions can be found here.
+         */
+        Utility: XrmRef.Utility;
+    }
 }
 
-/**
- * Client-side xRM object model.
- */
-interface Xrm<T extends IPage.PageBase<IPage.AttributeCollectionBase, IPage.TabCollectionBase, IPage.ControlCollectionBase>> {
-    /**
-     * The Xrm.Page object model, which contains data about the current page.
-     */
-    Page: T;
-    /**
-     * Various utility functions can be found here.
-     */
-    Utility: XrmRef.Utility;
-}
 
 
-declare module XrmRef{
-    var Page: IPage.PageBase<IPage.AttributeCollectionBase, IPage.TabCollectionBase, IPage.ControlCollectionBase>;
+declare module /*ModuleName*/XrmRef {
+    var Page: Forms.PageBase<Forms.AttributeCollectionBase, Forms.TabCollectionBase, Forms.ControlCollectionBase>;
     var Utility: Utility;
 
     /**
@@ -1579,7 +1579,7 @@ declare module XrmRef{
 /**
  * SDK module
  */
-declare module SDK {
+declare module /*ModuleName*/SDK {
     /**
      * Interface for an entity reference for the OData endpoint.
      */
@@ -1628,28 +1628,28 @@ declare module SDK {
 }
 
 
-interface Entities { }
-interface QueryMapping<O, S, E, F, R> {
-    __isEntityMapping: O;
-}
-interface Attribute<T> {
-    __isAttribute: T;
-}
-interface Expandable<T, U> extends Attribute<T> {
-    __isExpandable: U;
-}
+//interface Entities { }
+//interface QueryMapping<O, S, E, F, R> {
+//    __isEntityMapping: O;
+//}
+//interface Attribute<T> {
+//    __isAttribute: T;
+//}
+//interface Expandable<T, U> extends Attribute<T> {
+//    __isExpandable: U;
+//}
 
-interface Filter {
-    __isFilter;
-}
-interface ValueContainerFilter<T> {
-    Value: T;
-}
-interface Guid {
-    __isGuid;
-}
-interface EntityReferenceFilter {
-    Id: Guid;
-    Name: string;
-    LogicalName: string;
-}
+//interface Filter {
+//    __isFilter;
+//}
+//interface ValueContainerFilter<T> {
+//    Value: T;
+//}
+//interface Guid {
+//    __isGuid;
+//}
+//interface EntityReferenceFilter {
+//    Id: Guid;
+//    Name: string;
+//    LogicalName: string;
+//}
