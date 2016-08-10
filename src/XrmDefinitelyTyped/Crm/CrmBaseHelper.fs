@@ -162,28 +162,28 @@ module internal CrmBaseHelper =
 
 
   // Retrieve speicifc entity metadata along with any intersect
-  let getSpecificEntitiesAndDependentMetadata proxyGetter logicalNames =
-    // TODO: either figure out the best degree of parallelism through code, or add it as a setting
-    let getMetadata = getSpecificEntityMetadataHybrid proxyGetter 4
-    let entities = getMetadata logicalNames
-
-    let set = logicalNames |> Set.ofArray
-    let needActivityParty =
-      not (set.Contains "activityparty") &&
-      entities 
-      |> Array.exists (fun m -> 
-        m.Attributes 
-        |> Array.exists (fun a -> 
-          a.AttributeType.GetValueOrDefault() = AttributeTypeCode.PartyList))
-
-    let additionalEntities = 
-      findRelationEntities set entities
-      |> if needActivityParty then Array.append [|"activityparty"|] else id
-      |> getMetadata
-
-    Array.append entities additionalEntities
-    |> Array.distinctBy (fun e -> e.LogicalName)
-    |> Array.sortBy (fun e -> e.LogicalName)
+//  let getSpecificEntitiesAndDependentMetadata logicalNames =
+//    // TODO: either figure out the best degree of parallelism through code, or add it as a setting
+//    let getMetadata = getSpecificEntityMetadataHybrid
+//    let entities = getMetadata logicalNames
+//
+//    let set = logicalNames |> Set.ofArray
+//    let needActivityParty =
+//      not (set.Contains "activityparty") &&
+//      entities 
+//      |> Array.exists (fun m -> 
+//        m.Attributes 
+//        |> Array.exists (fun a -> 
+//          a.AttributeType.GetValueOrDefault() = AttributeTypeCode.PartyList))
+//
+//    let additionalEntities = 
+//      findRelationEntities set entities
+//      |> if needActivityParty then Array.append [|"activityparty"|] else id
+//      |> getMetadata
+//
+//    Array.append entities additionalEntities
+//    |> Array.distinctBy (fun e -> e.LogicalName)
+//    |> Array.sortBy (fun e -> e.LogicalName)
 
 
   // Retrieve single entity metadata

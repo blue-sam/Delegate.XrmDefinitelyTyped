@@ -4,6 +4,7 @@ open System
 open Utility
 open GeneratorLogic
 open System.Collections.Concurrent
+open XrmDefinitelyTyped.Metadata
 
 type XrmDefinitelyTyped private () =
 
@@ -41,14 +42,14 @@ type XrmDefinitelyTyped private () =
       let sdkVersion =
         if settings.sdkVersion.IsNone then retrieveCrmVersion mainProxy
         else settings.sdkVersion.Value
+      
 
-      let entities = 
-        getFullEntityList settings.entities settings.solutions mainProxy
+      let solutionEntities = GetSolutionEntities.GetSolutionMetadata(mainProxy, settings.solutions.Value)
 
       // Connect to CRM and interpret the data
       let data = 
-        (mainProxy, proxyGetter)
-        ||> retrieveCrmData sdkVersion entities
+        solutionEntities 
+        |> retrieveCrmData sdkVersion mainProxy
         |> interpretCrmData out tsv settings.moduleName
 
       // Pre-generation tasks

@@ -126,6 +126,13 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\XrmDefinitelyTyped.Metadata\XrmDefinitelyTyped.Metadata.csproj">
+      <Name>XrmDefinitelyTyped.Metadata</Name>
+      <Project>{1f1ca93d-85cb-4abb-8fa8-5fdd10fb6252}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup>
     <PostBuildEvent>
     </PostBuildEvent>
