@@ -127,6 +127,18 @@ module GeneratorLogic =
     proxy
 
 
+  // Retrieve CRM entity metadata
+  let retrieveEntityMetadata entities mainProxy proxyGetter =
+    printf "Fetching entity metadata from CRM..."
+
+    let rawEntityMetadata = 
+      match entities with
+      | None -> CrmBaseHelper.getAllEntityMetadata mainProxy
+      | Some logicalNames -> 
+        CrmBaseHelper.getSpecificEntitiesAndDependentMetadata proxyGetter logicalNames
+
+    printfn "Done!"
+    rawEntityMetadata
 
   /// Retrieve version from CRM
   let retrieveCrmVersion mainProxy =
@@ -139,9 +151,9 @@ module GeneratorLogic =
     version
 
   /// Retrieve all the necessary CRM data
-  let retrieveCrmData sdkVersion mainProxy rawEntityMetadata=
-//    let rawEntityMetadata = 
-//      retrieveEntityMetadata entities mainProxy proxyGetter
+  let retrieveCrmData sdkVersion entities mainProxy proxyGetter =
+    let rawEntityMetadata = 
+      retrieveEntityMetadata entities mainProxy proxyGetter
     
     printf "Fetching BPF metadata from CRM..."
     let bpfData = 
@@ -153,13 +165,16 @@ module GeneratorLogic =
     printf "Fetching FormXmls from CRM..."
     let formData =
       rawEntityMetadata
-      |> Array.map (fun (em:EntityMetadata) -> 
+      |> Array.Parallel.map (fun em -> 
+        let proxy = proxyGetter()
         em.LogicalName, 
-        CrmDataHelper.getEntityForms mainProxy em.LogicalName)
+        CrmDataHelper.getEntityForms proxy em.LogicalName)
       |> Map.ofArray
-        
-    let rowState ={ RawState.metadata = rawEntityMetadata; RawState.bpfData = bpfData;RawState.formData = formData }
-    rowState
+    printfn "Done!"
+
+    { RawState.metadata = rawEntityMetadata
+      bpfData = bpfData
+      formData = formData }
 
 
   /// Gets all the entities related to the given solutions and merges with the given entities
