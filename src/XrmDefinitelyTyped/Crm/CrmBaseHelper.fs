@@ -72,7 +72,6 @@ module internal CrmBaseHelper =
   let getAllEntityMetadataLight proxy =
     let request = RetrieveAllEntitiesRequest()
     request.EntityFilters <- Microsoft.Xrm.Sdk.Metadata.EntityFilters.Entity
-    request.RetrieveAsIfPublished <- true
 
     let resp = getResponse<RetrieveAllEntitiesResponse> proxy request
     resp.EntityMetadata
@@ -81,7 +80,6 @@ module internal CrmBaseHelper =
   let getAllEntityMetadata (proxy:OrganizationServiceProxy) =
     let request = RetrieveAllEntitiesRequest()
     request.EntityFilters <- Microsoft.Xrm.Sdk.Metadata.EntityFilters.All
-    request.RetrieveAsIfPublished <- true
 
     let resp = getResponse<RetrieveAllEntitiesResponse> proxy request
     resp.EntityMetadata
@@ -91,7 +89,6 @@ module internal CrmBaseHelper =
     let request = RetrieveEntityRequest()
     request.LogicalName <- lname
     request.EntityFilters <- Microsoft.Xrm.Sdk.Metadata.EntityFilters.All
-    request.RetrieveAsIfPublished <- true
     request
 
   // Retrieve single entity metadata
@@ -141,7 +138,6 @@ module internal CrmBaseHelper =
   // Retrieve all optionset metadata
   let getAllOptionSetMetadata proxy =
     let request = RetrieveAllOptionSetsRequest()
-    request.RetrieveAsIfPublished <- true
 
     let resp = getResponse<RetrieveAllOptionSetsResponse> proxy request
     resp.OptionSetMetadata
@@ -191,7 +187,6 @@ module internal CrmBaseHelper =
     let request = RetrieveEntityRequest()
     request.MetadataId <- metadataId
     request.EntityFilters <- Microsoft.Xrm.Sdk.Metadata.EntityFilters.Entity
-    request.RetrieveAsIfPublished <- true
 
     let resp = getResponse<RetrieveEntityResponse> proxy request
     resp.EntityMetadata.LogicalName
